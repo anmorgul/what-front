@@ -62,36 +62,36 @@ pipeline {
 				}
 			}
 		}
-		stage("Quality Gate") {
-			steps {
-				timeout(time: 1, unit: 'HOURS') {
-					waitForQualityGate abortPipeline: true
-				}
-			}
-		}
-		stage("to nexus") {
-			steps {
-				script {
-					def version = readJSON file: './package.json'
-					zip zipFile: 'dist.zip', archive: false, dir: 'dist', overwrite: true
-					nexusArtifactUploader(
-						nexusVersion: 'nexus3',
-						protocol: 'http',
-						nexusUrl: '192.168.1.77:8081',
-						groupId: version.name,
-						version: version.version+ '-rc' + BUILD_ID + "." + GIT_COMMIT.take(6),
-						repository: 'what_raw_repo',
-						credentialsId: NEXUS_CREDENTIAL_ID,
-						artifacts: [
-							[artifactId: BRANCH_NAME,
-							classifier: 'debug',
-							file: 'dist.zip',
-							type: 'zip']
-						]
-					);
-				}
-			}
-		}
+		// stage("Quality Gate") {
+		// 	steps {
+		// 		timeout(time: 1, unit: 'HOURS') {
+		// 			waitForQualityGate abortPipeline: true
+		// 		}
+		// 	}
+		// }
+		// stage("to nexus") {
+		// 	steps {
+		// 		script {
+		// 			def version = readJSON file: './package.json'
+		// 			zip zipFile: 'dist.zip', archive: false, dir: 'dist', overwrite: true
+		// 			nexusArtifactUploader(
+		// 				nexusVersion: 'nexus3',
+		// 				protocol: 'http',
+		// 				nexusUrl: '192.168.1.77:8081',
+		// 				groupId: version.name,
+		// 				version: version.version+ '-rc' + BUILD_ID + "." + GIT_COMMIT.take(6),
+		// 				repository: 'what_raw_repo',
+		// 				credentialsId: NEXUS_CREDENTIAL_ID,
+		// 				artifacts: [
+		// 					[artifactId: BRANCH_NAME,
+		// 					classifier: 'debug',
+		// 					file: 'dist.zip',
+		// 					type: 'zip']
+		// 				]
+		// 			);
+		// 		}
+		// 	}
+		// }
 		stage("upload for tests") {
 			parallel {
 				stage('branch is master') {
@@ -100,24 +100,24 @@ pipeline {
 					}
 					steps {
 						echo "branch fakemaster"
-						withCredentials([
-							usernamePassword(credentialsId: 'nexus_admin_id', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER'),
-							]) {
-							script {
-								artifactPath = "http://192.168.1.77:8081/repository/what_raw_repo/what/fakemaster/1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}/fakemaster-1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}-debug.zip"
-								ansiblePlaybook(
-									credentialsId: 'dev_ssh_key', 
-									playbook: 'jenkins/deploy_master_stage.yml', 
-									inventory: 'jenkins/hosts.ini',
-									disableHostKeyChecking: true,
-									extraVars: [
-										nexus_url: artifactPath,
-										nexus_user: NEXUS_USER,
-										nexus_pass: NEXUS_PASS
-									]
-								)
-							}
-						}
+						// withCredentials([
+						// 	usernamePassword(credentialsId: 'nexus_admin_id', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER'),
+						// 	]) {
+						// 	script {
+						// 		artifactPath = "http://192.168.1.77:8081/repository/what_raw_repo/what/fakemaster/1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}/fakemaster-1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}-debug.zip"
+						// 		ansiblePlaybook(
+						// 			credentialsId: 'dev_ssh_key', 
+						// 			playbook: 'jenkins/deploy_master_stage.yml', 
+						// 			inventory: 'jenkins/hosts.ini',
+						// 			disableHostKeyChecking: true,
+						// 			extraVars: [
+						// 				nexus_url: artifactPath,
+						// 				nexus_user: NEXUS_USER,
+						// 				nexus_pass: NEXUS_PASS
+						// 			]
+						// 		)
+						// 	}
+						// }
 					}
 				}
 				stage('branch is dev') {
@@ -126,25 +126,25 @@ pipeline {
 					}
 					steps {
 						echo "branch fakedev"
-						withCredentials([
-							usernamePassword(credentialsId: 'nexus_admin_id', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER'),
-							]) {
-							script {
-								artifactPath = "http://192.168.1.77:8081/repository/what_raw_repo/what/fakedev/1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}/fakedev-1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}-debug.zip"
-								ansiblePlaybook(
-									credentialsId: 'dev_ssh_key', 
-									playbook: 'jenkins/deploy_dev.yml', 
-									inventory: 'jenkins/hosts.ini',
-									disableHostKeyChecking: true,
-									// extras: '-vvv',
-									extraVars: [
-										nexus_url: artifactPath,
-										nexus_user: NEXUS_USER,
-										nexus_pass: NEXUS_PASS
-									]
-								)
-							}
-						}
+						// withCredentials([
+						// 	usernamePassword(credentialsId: 'nexus_admin_id', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER'),
+						// 	]) {
+						// 	script {
+						// 		artifactPath = "http://192.168.1.77:8081/repository/what_raw_repo/what/fakedev/1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}/fakedev-1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}-debug.zip"
+						// 		ansiblePlaybook(
+						// 			credentialsId: 'dev_ssh_key', 
+						// 			playbook: 'jenkins/deploy_dev.yml', 
+						// 			inventory: 'jenkins/hosts.ini',
+						// 			disableHostKeyChecking: true,
+						// 			// extras: '-vvv',
+						// 			extraVars: [
+						// 				nexus_url: artifactPath,
+						// 				nexus_user: NEXUS_USER,
+						// 				nexus_pass: NEXUS_PASS
+						// 			]
+						// 		)
+						// 	}
+						// }
 					}
 				}
 			}
@@ -182,24 +182,24 @@ pipeline {
 					}
 					steps {
 						echo "branch fakemaster"
-						withCredentials([
-							usernamePassword(credentialsId: 'nexus_admin_id', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER'),
-							]) {
-							script {
-								artifactPath = "http://192.168.1.77:8081/repository/what_raw_repo/what/fakemaster/1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}/fakemaster-1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}-debug.zip"
-								ansiblePlaybook(
-									credentialsId: 'dev_ssh_key', 
-									playbook: 'jenkins/deploy_master_prod.yml', 
-									inventory: 'jenkins/hosts.ini',
-									disableHostKeyChecking: true,
-									extraVars: [
-										nexus_url: artifactPath,
-										nexus_user: NEXUS_USER,
-										nexus_pass: NEXUS_PASS
-									]
-								)
-							}
-						}
+						// withCredentials([
+						// 	usernamePassword(credentialsId: 'nexus_admin_id', passwordVariable: 'NEXUS_PASS', usernameVariable: 'NEXUS_USER'),
+						// 	]) {
+						// 	script {
+						// 		artifactPath = "http://192.168.1.77:8081/repository/what_raw_repo/what/fakemaster/1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}/fakemaster-1.0.0-rc${BUILD_ID}.${GIT_COMMIT.take(6)}-debug.zip"
+						// 		ansiblePlaybook(
+						// 			credentialsId: 'dev_ssh_key', 
+						// 			playbook: 'jenkins/deploy_master_prod.yml', 
+						// 			inventory: 'jenkins/hosts.ini',
+						// 			disableHostKeyChecking: true,
+						// 			extraVars: [
+						// 				nexus_url: artifactPath,
+						// 				nexus_user: NEXUS_USER,
+						// 				nexus_pass: NEXUS_PASS
+						// 			]
+						// 		)
+						// 	}
+						// }
 					}
 				}
 			}
